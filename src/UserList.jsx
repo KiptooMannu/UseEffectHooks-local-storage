@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import './UserList.css'; // Import the CSS file for styling
+import './UserList.css';
 
 function UserList() {
   const [users, setUsers] = useState([]);
@@ -7,23 +7,36 @@ function UserList() {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const response = await fetch('https://jsonplaceholder.typicode.com/users');
-        if (!response.ok) {
-          throw new Error('Network response was not ok');
+    const storedUsers = localStorage.getItem('users');
+    if (storedUsers) {
+      setUsers(JSON.parse(storedUsers));
+      setLoading(false);
+    } else {
+      const fetchData = async () => {
+        try {
+          const response = await fetch('https://jsonplaceholder.typicode.com/users');
+          if (!response.ok) {
+            throw new Error('Network response was not ok');
+          }
+          const data = await response.json();
+          setUsers(data);
+          localStorage.setItem('users', JSON.stringify(data));
+          setLoading(false);
+        } catch (error) {
+          setError(error);
+          setLoading(false);
         }
-        const data = await response.json();
-        setUsers(data);
-        setLoading(false);
-      } catch (error) {
-        setError(error);
-        setLoading(false);
-      }
-    };
+      };
 
-    fetchData();
+      fetchData();
+    }
   }, []);
+
+  const clearLocalStorage = () => {
+    localStorage.removeItem('users');
+    setUsers([]);
+    setLoading(true);
+  };
 
   if (loading) {
     return <div>Loading...</div>;
@@ -36,6 +49,7 @@ function UserList() {
   return (
     <div className="user-list">
       <h1>User List</h1>
+      <button onClick={clearLocalStorage}>Clear Local Storage</button>
       <ul>
         {users.map(user => (
           <li key={user.id} className="user-card">
